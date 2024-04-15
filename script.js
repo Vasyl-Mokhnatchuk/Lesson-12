@@ -1,31 +1,21 @@
 const fs = require('fs');
-const readline = require('readline');
 
-const readStream = fs.createReadStream('text.txt');
-const writeStream = fs.createWriteStream('result.txt');
+const inputFile = 'input.txt';
+const outputFile = 'output.txt';
 
-const rl = readline.createInterface({
-  input: readStream,
-  crlfDelay: Infinity
-});
+fs.readFile(inputFile, 'utf-8', (err, data) => {
+  if (err) throw err;
 
-let count = 1;
-
-rl.on('line', (line) => {
-
-  const words = line.split(' ');
-
-  for (let i = 0; i < words.length; i++) {
-    if (count % 3 === 0) {
+  const processedData = data.split('\n').map(line => {
+    const words = line.split(' ');
+    for (let i = 2; i < words.length; i += 3) {
       words[i] = words[i].toUpperCase();
     }
-    count++;
-  }
+    return words.join(' ');
+  }).join('\n');
 
-  writeStream.write(words.join(' ') + '\n');
-});
-
-rl.on('close', () => { 
-  console.log('Готово! Результати записані в файл result.txt')
-  writeStream.close();
+  fs.writeFile(outputFile, processedData, (err) => {
+    if (err) throw err;
+    console.log('Файл успішно оброблено!');
+  });
 });
