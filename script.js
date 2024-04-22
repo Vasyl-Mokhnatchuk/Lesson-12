@@ -1,21 +1,33 @@
 const fs = require('fs');
+const { Transform } = require('stream');
+
+class UpperCaseEveryThirdWord extends Transform {
+  constructor(options) {
+    super(options);
+    this.wordCount = 0;
+  }
+
+  _transform(chunk, encoding, callback) {
+    const words = chunk.toString().split(' ');
+    const modifiedWords = words.map((word, index) => {
+      this.wordCount++;
+      return (this.wordCount % 3 === 0) ? word.toUpperCase() : word;
+    });
+    callback(null, modifiedWords.join(' '));
+  }
+}
 
 const inputFile = 'input.txt';
 const outputFile = 'output.txt';
+const inputStream = fs.createReadStream(inputFile);
+const upperCaseStream = new UpperCaseEveryThirdWord();
+const outputStream = fs.createWriteStream(outputFile);
 
-fs.readFile(inputFile, 'utf-8', (err, data) => {
-  if (err) throw err;
+inputStream.pipe(upperCaseStream).pipe(outputStream);
 
-  const processedData = data.split('\n').map(line => {
-    const words = line.split(' ');
-    for (let i = 2; i < words.length; i += 3) {
-      words[i] = words[i].toUpperCase();
-    }
-    return words.join(' ');
-  }).join('\n');
-
-  fs.writeFile(outputFile, processedData, (err) => {
-    if (err) throw err;
-    console.log('Файл успішно оброблено!');
+outputStream.on('finish', () => {
+    console.log('Успішно виконано! Результат записано в output.txt');
   });
-});
+outputStream.on('error', (err) => {
+    console.error('Помилка:', err.message);
+  });
